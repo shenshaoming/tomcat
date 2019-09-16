@@ -17,7 +17,8 @@ public class HttpServer {
     public void acceptWait(){
         ServerSocket serverSocket = null;
         try {
-            serverSocket = new ServerSocket(8080, 1, InetAddress.getByName("127.0.0.1"));
+            //backlog为并发访问队列,访问的数量如果超出队列值,则服务器崩溃
+            serverSocket = new ServerSocket(8080, 3, InetAddress.getByName("127.0.0.1"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -44,10 +45,5 @@ public class HttpServer {
                 continue;
             }
         }
-    }
-
-    public static void main(String[] args) {
-        HttpServer server = new HttpServer();
-        server.acceptWait();
     }
 }

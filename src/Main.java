@@ -1,6 +1,13 @@
+import com.tomcat.core.HttpServer;
+
+/**
+ * @author: 申劭明
+ * @date: 2019-09-16
+ */
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        HttpServer server = new HttpServer();
+        server.acceptWait();
     }
 }
