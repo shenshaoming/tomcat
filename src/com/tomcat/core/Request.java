@@ -21,23 +21,41 @@ public class Request {
     }
 
     public void parse() {
-        //从socket中读取一个2048长度的字符串
+        /**
+         * 一个包没有固定长度，以太网限制在46－1500字节，
+         * 1500就是以太网的MTU，超过这个量，TCP会为IP数据报设置偏移量进行分片传输，
+         * 现在一般可允许应用层设置8k（NTFS系统）的缓冲区，8k的数据由底层分片，
+         * 而应用层看来只是一次发送。
+         */
+        //创建一个容量为2048的StringBuffer对象
         StringBuffer request = new StringBuffer(Response.BUFFER_SIZE);
+        //记录字节数量
         int i ;
         byte[] buffer = new byte[Response.BUFFER_SIZE];
         try {
+            //从输入流中读取数据到buffer中,i表示读到了多少字节(多少个byte)
             i = is.read(buffer);
         } catch (IOException e) {
             e.printStackTrace();
             i = -1;
         }
+        System.out.println(request);
+        //i表示有读到了多少字节,所以此处要用<而不是<=
         for (int j = 0; j < i; j++) {
             request.append((char)buffer[j]);
         }
-        System.out.println(request.toString());
+        System.err.println(request.toString());
         url = parseUrl(request.toString());
     }
 
+    /**
+     * @Description : 从请求
+     *
+     * @param request
+     * @return : java.lang.String
+     * @author : 申劭明
+     * @date : 2019/9/17 9:33
+    */
     private String parseUrl(String request) {
         int index1,index2;
         //查看socket获取的请求头是否有值
