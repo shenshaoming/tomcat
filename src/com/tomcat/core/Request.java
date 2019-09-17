@@ -10,6 +10,9 @@ import java.io.InputStream;
 public class Request {
 
     private InputStream is;
+    /**
+     * 请求路径,如:/test.txt
+     */
     private String url;
 
     public Request(){
@@ -20,6 +23,12 @@ public class Request {
         this.is = inputStream;
     }
 
+    /**
+     * @Description : 获取http请求中的相关参数
+     *
+     * @author : 申劭明
+     * @date : 2019/9/17 10:26
+    */
     public void parse() {
         /**
          * 一个包没有固定长度，以太网限制在46－1500字节，
@@ -49,10 +58,10 @@ public class Request {
     }
 
     /**
-     * @Description : 从请求
+     * @Description : 获取请求路径,如http://localhost:8080/test.txt,截取/test.txt
      *
-     * @param request
-     * @return : java.lang.String
+     * @param request 请求头
+     * @return : 请求路径
      * @author : 申劭明
      * @date : 2019/9/17 9:33
     */

@@ -8,39 +8,38 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 /**
+ * 监听请求,调用request和response对请求作出反应
  * @Author: 申劭明
  * @Date: 2019/9/16 17:21
  */
 public class HttpServer {
-    private boolean shutdown = false;
 
+    public static ServerSocket serverSocket = null;
+
+    /**
+     * @Description : 多线程bio监听数据请求
+     *
+     * @author : 申劭明
+     * @date : 2019/9/17 10:29
+    */
     public void acceptWait(){
-        ServerSocket serverSocket = null;
         try {
-            //backlog为并发访问队列,如果同一时间访问的数量如果超出队列值,则服务器崩溃
-            serverSocket = new ServerSocket(8080, 3, InetAddress.getByName("127.0.0.1"));
+            if (serverSocket == null){
+                synchronized (HttpServer.class){
+                    if (serverSocket == null) {
+                        serverSocket = new ServerSocket(8080);
+                    }
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        while(!shutdown){
+        while(!serverSocket.isClosed()){
             try {
-                //只要服务器没有关闭就持续监听
+                //单线程,阻塞式监听(bio)
                 Socket socket = serverSocket.accept();
-                InputStream is = socket.getInputStream();
-                OutputStream outputStream = socket.getOutputStream();
-                //接收请求参数
-                Request request = new Request(is);
-                request.parse();
-                //创建用于返回浏览器的对象
-                Response response = new Response(outputStream);
-                response.setRequest(request);
-                response.sendStaticResource();
-                //关闭一次请求的socket,因为http去请求就是采用短连接的方式
-                socket.close();
-                //如果请求的是/shutdown 则关闭服务器
-                if (null != request){
-                    shutdown = request.getUrl().equals("/shutdown");
-                }
+                RequestHandler handler = new RequestHandler(socket);
+                handler.start();
             } catch (IOException e) {
                 e.printStackTrace();
                 continue;

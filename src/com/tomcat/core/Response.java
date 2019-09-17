@@ -19,6 +19,12 @@ public class Response {
     private static final String WEB_ROOT = "D:";
 
     /**
+     * 响应头信息
+     */
+    private static final String RESPONSE_HEADER = "HTTP/1.1 200 Read File Success\r\n" +
+            "Content-Type: text/html;charset=UTF-9\r\n" + "\r\n";
+
+    /**
      * 请求
      */
     private Request request;
@@ -36,29 +42,31 @@ public class Response {
         this.request = request;
     }
 
+    /**
+     * @Description : 向页面返回数据
+     *
+     * @author : 申劭明
+     * @date : 2019/9/17 10:27
+    */
     public void sendStaticResource() throws IOException {
         //返回数据时所用的字节流
         byte[] bytes = new byte[BUFFER_SIZE];
         FileInputStream fis = null;
         File file = new File(WEB_ROOT, request.getUrl());
-        String returnMessage = "";
+        String returnMessage = null;
         try {
             //如果文件存在,且不是个目录
             if (file.exists() && !file.isDirectory()) {
                 fis = new FileInputStream(file);
                 //读文件
-                int ch = -1;
+                int ch ;
 
                 StringBuilder sb = new StringBuilder(BUFFER_SIZE);
                 //写文件
                 while ((ch = fis.read(bytes,0,bytes.length)) != -1) {
-                    sb.append(new String(bytes,0,ch,"GBK"));
+                    sb.append(new String(bytes,0,ch,"UTF-8"));
                 }
-                returnMessage = "HTTP/1.1 404 File Not Fount\r\n" +
-                        "Content-Type: text/html\r\n" +
-                        "Content-Length: " + sb.length() + "\r\n" +
-                        "\r\n" +
-                        sb;
+                returnMessage =  RESPONSE_HEADER + sb;
             }else {
                 //文件不存在,返回给浏览器响应提示,这里可以拼接HTML任何元素
                 String retMessage = "<h1>" + file.getName() + " file or directory not exists</h1>";
@@ -68,12 +76,17 @@ public class Response {
                         "\r\n" +
                         retMessage;
             }
+            //用输出流返回数据给页面
             output.write(returnMessage.getBytes());
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
             if (fis != null){
                 fis.close();
+            }
+            if (output != null){
+                output.flush();
+                output.close();
             }
         }
     }
