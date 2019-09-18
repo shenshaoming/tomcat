@@ -13,14 +13,24 @@ public class Request {
     /**
      * 请求路径,如:/test.txt
      */
-    private String url;
+    private String uri;
 
+    /**
+     * 请求类型,GET或POST等
+     */
+    private String method;
+
+    public String getMethod() {
+        return method;
+    }
     public Request(){
 
     }
 
     public Request(InputStream inputStream){
         this.is = inputStream;
+        //读取报文
+        parse();
     }
 
     /**
@@ -54,18 +64,19 @@ public class Request {
             request.append((char)buffer[j]);
         }
         System.err.println(request.toString());
-        url = parseUrl(request.toString());
+        uri = parseUri(request.toString());
+        method = parseMethod(request.toString());
     }
 
     /**
-     * @Description : 获取请求路径,如http://localhost:8080/test.txt,截取/test.txt
+     * @Description : 获取请求路径,如http://localhost:8080/test.txt,截取/test.txt(URI)
      *
      * @param request 请求头
      * @return : 请求路径
      * @author : 申劭明
      * @date : 2019/9/17 9:33
     */
-    private String parseUrl(String request) {
+    private String parseUri(String request) {
         int index1,index2;
         //查看socket获取的请求头是否有值
         index1 = request.indexOf(' ');
@@ -78,7 +89,23 @@ public class Request {
         return null;
     }
 
-    public String getUrl() {
-        return url;
+    /**
+     * @Description : 获取请求类型
+     *
+     * @param request 请求报文
+     * @return : GET,POST...
+     * @author : 申劭明
+     * @date : 2019/9/18 9:51
+    */
+    private String parseMethod(String request){
+        int index = request.indexOf(' ');
+        if (index != -1){
+            return request.substring(0,index);
+        }
+        return null;
+    }
+
+    public String getUri() {
+        return uri;
     }
 }

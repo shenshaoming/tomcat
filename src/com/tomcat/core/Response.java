@@ -52,7 +52,7 @@ public class Response {
         //返回数据时所用的字节流
         byte[] bytes = new byte[BUFFER_SIZE];
         FileInputStream fis = null;
-        File file = new File(WEB_ROOT, request.getUrl());
+        File file = new File(WEB_ROOT, request.getUri());
         String returnMessage = null;
         try {
             //如果文件存在,且不是个目录
@@ -85,9 +85,29 @@ public class Response {
                 fis.close();
             }
             if (output != null){
-                output.flush();
+                //清空缓存区,调用close方法时会有flush操作
+//                output.flush();
                 output.close();
             }
         }
+    }
+
+    /**
+     * @Description : 设置返回数据
+     *
+     * @param message 返回给页面的数据
+     * @author : 申劭明
+     * @date : 2019/9/18 10:19
+    */
+    public void setResponseContent(StringBuilder message){
+        try {
+            output.write(new StringBuilder(RESPONSE_HEADER).append(message).toString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void setResponseHeader(String message){
+        setResponseContent(new StringBuilder(message));
     }
 }

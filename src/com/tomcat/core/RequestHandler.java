@@ -1,8 +1,7 @@
 package com.tomcat.core;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.tomcat.baseservlet.AbstractServlet;
+
 import java.net.Socket;
 
 /**
@@ -13,38 +12,36 @@ public class RequestHandler extends Thread {
 
     private Socket socket;
 
-    private InputStream is;
-
-    private OutputStream outputStream;
-
-    public RequestHandler(Socket socket) throws IOException {
+    public RequestHandler(Socket socket){
         this.socket = socket;
-        this.is = socket.getInputStream();
-        this.outputStream = socket.getOutputStream();
     }
 
     @Override
     public void run() {
-        //接收请求参数
-        Request request = new Request(is);
-        request.parse();
-        //创建用于返回浏览器的对象
-        Response response = new Response(outputStream);
-        response.setRequest(request);
+
         try {
-            response.sendStaticResource();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //如果请求的是/shutdown 则关闭服务器
-        if (null != request){
-            if ("/shutdown".equals(request.getUrl())){
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            //接收请求参数
+            Request request = new Request(socket.getInputStream());
+            AbstractServlet abstractServlet = HttpServer.map.get(request.getUri());
+
+            //如果请求的是/shutdown 则关闭服务器
+            if (HttpServer.CLOSE_URI.equals(request.getUri())){
+                HttpServer.serverSocket.close();
+                return;
             }
+            //创建用于返回浏览器的对象
+            Response response = new Response(socket.getOutputStream());
+            response.setRequest(request);
+
+            if (abstractServlet != null){
+                abstractServlet.service(request,response);
+            }else{
+                response.sendStaticResource();
+            }
+            //如果http短连接则关闭socket
+            //socket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
