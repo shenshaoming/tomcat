@@ -36,6 +36,7 @@ public class RequestHandler extends Thread {
             if (abstractServlet != null){
                 abstractServlet.service(request,response);
             }else{
+                //找不到对应的Servlet则直接访问文件
                 response.sendStaticResource();
             }
             //如果http短连接则关闭socket
