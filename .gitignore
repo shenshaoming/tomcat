@@ -56,4 +56,5 @@ local.properties
 .scala_dependencies
 .worksheet
 target/
+out/
 .idea/
