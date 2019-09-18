@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * @Date: 2019/9/18 10:37
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface Servlet {
     String value() default "/";
 }

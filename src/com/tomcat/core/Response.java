@@ -22,7 +22,7 @@ public class Response {
      * 响应头信息
      */
     private static final String RESPONSE_HEADER = "HTTP/1.1 200 Read File Success\r\n" +
-            "Content-Type: text/html;charset=UTF-9\r\n" + "\r\n";
+            "Content-Type: text/html\r\n" + "\r\n";
 
     /**
      * 请求
@@ -64,9 +64,10 @@ public class Response {
                 StringBuilder sb = new StringBuilder(BUFFER_SIZE);
                 //写文件
                 while ((ch = fis.read(bytes,0,bytes.length)) != -1) {
-                    sb.append(new String(bytes,0,ch,"UTF-8"));
+                    sb.append(new String(bytes,0,ch));
                 }
                 returnMessage =  RESPONSE_HEADER + sb;
+
             }else {
                 //文件不存在,返回给浏览器响应提示,这里可以拼接HTML任何元素
                 String retMessage = "<h1>" + file.getName() + " file or directory not exists</h1>";
@@ -77,7 +78,11 @@ public class Response {
                         retMessage;
             }
             //用输出流返回数据给页面
-            output.write(returnMessage.getBytes());
+            if (checkImage(request.getUri())){
+                output.write(returnMessage.replaceAll("text/html","image/jpeg;charset=UTF-8").getBytes());
+            }else{
+                output.write(returnMessage.getBytes());
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -90,6 +95,19 @@ public class Response {
                 output.close();
             }
         }
+    }
+
+    /**
+     * @Description : 判断请求是否为图片类型
+     *
+     * @param uri 请求的uri
+     * @return : 是/否
+     * @author : 申劭明
+     * @date : 2019/9/18 14:21
+    */
+    private boolean checkImage(String uri) {
+        boolean flag = uri.endsWith(".jpg") || uri.endsWith(".png") || uri.endsWith(".jpeg");
+        return flag;
     }
 
     /**
@@ -107,7 +125,7 @@ public class Response {
         }
     }
 
-    public void setResponseHeader(String message){
+    public void setResponseContent(String message){
         setResponseContent(new StringBuilder(message));
     }
 }
