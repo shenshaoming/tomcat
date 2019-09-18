@@ -14,7 +14,7 @@ import java.util.Set;
  * 监听请求,调用request和response对请求作出反应
  * @Author: 申劭明
  * @Date: 2019/9/16 17:21
- * @version: 4.0
+ * @version: 4.1
  */
 public class HttpServer {
 
@@ -29,7 +29,6 @@ public class HttpServer {
     static final String CLOSE_URI = "/shutdown";
 
     /**
-     * version:4.1将会采用SpringMvc的形式扫描获得所有的servlet对象
      * Key值为Servlet的别名(uri),value为该Servlet对象
      * default权限
      */
