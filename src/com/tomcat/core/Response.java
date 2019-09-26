@@ -51,6 +51,9 @@ public class Response {
         //返回数据时所用的字节流
         byte[] bytes = new byte[BUFFER_SIZE];
         FileInputStream fis = null;
+        if (request == null){
+            return;
+        }
         File file = new File(WEB_ROOT, request.getUri());
         String returnMessage = null;
         try {

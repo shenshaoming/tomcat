@@ -8,7 +8,7 @@ import java.net.Socket;
  * @Author: 申劭明
  * @Date: 2019/9/17 17:45
  */
-public class RequestHandler extends Thread {
+public class RequestHandler implements Runnable {
 
     private Socket socket;
 

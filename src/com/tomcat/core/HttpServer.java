@@ -3,6 +3,7 @@ package com.tomcat.core;
 import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
 import com.tomcat.exceptions.RequestMappingException;
+import com.tomcat.thread.TomcatThreadFactory;
 
 import java.io.*;
 import java.net.*;
@@ -10,6 +11,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 监听请求,调用request和response对请求作出反应
@@ -57,6 +60,8 @@ public class HttpServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        //创建线程(并发)池,自动伸缩(自动控制线程池的大小)
+        ExecutorService es = Executors.newCachedThreadPool(new TomcatThreadFactory());
 
         while (!serverSocket.isClosed()) {
             try {
@@ -67,7 +72,8 @@ public class HttpServer {
                 //version1:单线程
                 //version2:多线程阻塞式BIO
                 RequestHandler handler = new RequestHandler(socket);
-                handler.start();
+                //将线程添加到线程池中
+                es.execute(handler);
                 //主线程负责监听,子线程负责处理和响应
             } catch (IOException e) {
                 e.printStackTrace();
@@ -122,6 +128,12 @@ public class HttpServer {
                             String old = map.get(value).getClass().getName();
                             throw new RequestMappingException(now,old);
 
+                        }else{
+                            Class<?> superclass = aClass.getSuperclass();
+                            if (AbstractServlet.class != superclass){
+                                System.err.println("带有Servlet注解的类'" + aClass.getName() + "'没有继承自AbstractServlet");
+                                continue;
+                            }
                         }
                         //添加至map集合中
                         map.put(value, (AbstractServlet) aClass.newInstance());
