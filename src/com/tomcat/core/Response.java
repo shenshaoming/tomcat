@@ -28,7 +28,6 @@ public class Response {
      * 请求
      */
     private Request request;
-
     /**
      * 返回页面的数据
      */
@@ -43,7 +42,7 @@ public class Response {
     }
 
     /**
-     * @Description : 向页面返回数据
+     * @Description : 向页面返回静态数据
      *
      * @author : 申劭明
      * @date : 2019/9/17 10:27

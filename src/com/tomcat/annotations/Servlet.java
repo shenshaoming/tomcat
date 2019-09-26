@@ -1,9 +1,6 @@
 package com.tomcat.annotations;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * @Author: 申劭明
@@ -11,6 +8,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+//编译,运行
 public @interface Servlet {
     String value() default "/";
 }

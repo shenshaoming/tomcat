@@ -2,6 +2,7 @@ package com.tomcat.core;
 
 import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
+import com.tomcat.exceptions.RequestMappingException;
 
 import java.io.*;
 import java.net.*;
@@ -51,18 +52,23 @@ public class HttpServer {
      */
     public void acceptWait() {
         try {
+            //监听port端口
             serverSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //扫描包,读取包下的所有Servlet
 
         while (!serverSocket.isClosed()) {
             try {
                 //单线程,阻塞式监听(bio)
+                //多线程BIO
+                //nio和aio
                 Socket socket = serverSocket.accept();
+                //version1:单线程
+                //version2:多线程阻塞式BIO
                 RequestHandler handler = new RequestHandler(socket);
                 handler.start();
+                //主线程负责监听,子线程负责处理和响应
             } catch (IOException e) {
                 e.printStackTrace();
                 continue;
@@ -83,11 +89,14 @@ public class HttpServer {
         Set<Class<?>> classes = new LinkedHashSet<>();
 
         try {
+            //com.tomcat.servlet,com/tomcat/servelet
             String packageDirName = packageName.replace(".", "/");
             Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(packageDirName);
 
             while (resources.hasMoreElements()) {
                 URL url = resources.nextElement();
+                System.out.println("****************" + url);
+                System.out.println();
                 String protocol = url.getProtocol();
                 if ("file".equals(protocol)) {
                     String filePath = URLDecoder.decode(url.getFile(), "UTF-8");
@@ -104,12 +113,25 @@ public class HttpServer {
                 //如果该class有Servlet注解
                 if (aClass.isAnnotationPresent(Servlet.class)){
                     try {
+                        String value = aClass.getAnnotation(Servlet.class).value();
+                        //如果已经包含有该key值,则抛出异常
+                        if (map.containsKey(value)){
+                            //当前正在扫描的Servlet
+                            String now = aClass.getName();
+                            //已经存在的Servlet
+                            String old = map.get(value).getClass().getName();
+                            throw new RequestMappingException(now,old);
+
+                        }
                         //添加至map集合中
-                        map.put(aClass.getAnnotation(Servlet.class).value(), (AbstractServlet) aClass.newInstance());
+                        map.put(value, (AbstractServlet) aClass.newInstance());
                     } catch (InstantiationException e) {
                         e.printStackTrace();
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
+                    } catch (RequestMappingException e) {
+                        e.printStackTrace();
+                        System.exit(-1);
                     }
                 }
             }

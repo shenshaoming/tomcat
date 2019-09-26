@@ -18,7 +18,6 @@ public class RequestHandler extends Thread {
 
     @Override
     public void run() {
-
         try {
             //接收请求参数
             Request request = new Request(socket.getInputStream());

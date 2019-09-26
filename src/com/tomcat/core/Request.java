@@ -47,7 +47,7 @@ public class Request {
          * 而应用层看来只是一次发送。
          */
         //创建一个容量为2048的StringBuffer对象
-        StringBuffer request = new StringBuffer(Response.BUFFER_SIZE);
+        StringBuffer request = new StringBuffer(2048);
         //记录字节数量
         int i ;
         byte[] buffer = new byte[Response.BUFFER_SIZE];
@@ -64,7 +64,9 @@ public class Request {
             request.append((char)buffer[j]);
         }
         System.err.println(request.toString());
+        //获取请求uri
         uri = parseUri(request.toString());
+        //获取请求类型
         method = parseMethod(request.toString());
     }
 

@@ -9,7 +9,7 @@ import com.tomcat.core.Response;
  * @Author: 申劭明
  * @Date: 2019/9/18 17:02
  */
-@Servlet("/login")
+@Servlet(value = "/login")
 public class LoginServlet extends AbstractServlet {
     @Override
     protected void doGet(Request request, Response response) {
