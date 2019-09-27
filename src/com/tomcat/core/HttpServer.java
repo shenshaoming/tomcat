@@ -137,9 +137,7 @@ public class HttpServer {
                         }
                         //添加至map集合中
                         map.put(value, (AbstractServlet) aClass.newInstance());
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
+                    } catch (InstantiationException | IllegalAccessException e) {
                         e.printStackTrace();
                     } catch (RequestMappingException e) {
                         e.printStackTrace();
@@ -159,7 +157,6 @@ public class HttpServer {
      * @param packagePath 包路径,com/tomcat/servlet
      * @param recursive 是否循环遍历子包内的文件
      * @param classes class集合
-     * @return : void
      * @author : 申劭明
      * @date : 2019/9/18 16:55
     */
@@ -172,14 +169,9 @@ public class HttpServer {
             return;
         }
         // 如果存在 就获取包下的所有文件 包括目录
-        File[] dirfiles = dir.listFiles(new FileFilter() {
-            // 自定义过滤规则 如果可以循环(包含子目录) 或则是以.class结尾的文件(编译好的java类文件)
-            @Override
-            public boolean accept(File file) {
-                return (recursive && file.isDirectory())
-                        || (file.getName().endsWith(".class"));
-            }
-        });
+        // 自定义过滤规则 如果可以循环(包含子目录) 或则是以.class结尾的文件(编译好的java类文件)
+        File[] dirfiles = dir.listFiles(file -> (recursive && file.isDirectory())
+                || (file.getName().endsWith(".class")));
         // 循环所有文件
         for (File file : dirfiles) {
             // 如果是目录 则继续扫描
