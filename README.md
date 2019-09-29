@@ -7,4 +7,5 @@ version3.1:实现多线程bio监听端口<br>
 version4.0:能够通过服务器访问Servlet程序<br>
 version4.1:通过扫描包和注解的形式,实现了类似SpringMvc的机制<br>
 version4.2:当Servlet注解中的value重复时抛出异常<br>
-version5.0:由开启线程改为线程池.
+version5.0:由开启线程改为线程池.<br>
+version5.1:改为由ThreadPoolExecutor创建线程池

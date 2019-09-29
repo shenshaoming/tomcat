@@ -11,8 +11,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 /**
  * 监听请求,调用request和response对请求作出反应
@@ -60,24 +59,39 @@ public class HttpServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //创建线程(并发)池,自动伸缩(自动控制线程池的大小)
-        ExecutorService es = Executors.newCachedThreadPool(new TomcatThreadFactory());
+        //请求队列,当线程池中的线程数量达到
+        BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(50);
+        //线程池中核心线程数的最大值(不是操作系统的最大值)
+        int corePoolSize = 10;
+        //最大队列空间
+        int maximumPoolSize = 50;
+        //表示空闲线程的存活时间
+        long keepAliveTime = 100L;
+        //keepAliveTime的单位
+        TimeUnit unit = TimeUnit.SECONDS;
+        //线程池的拒绝策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
+        //创建一个新的线程池
+        ThreadPoolExecutor es = new ThreadPoolExecutor(corePoolSize,
+        maximumPoolSize,
+        keepAliveTime,
+        unit,
+        workQueue,
+        Executors.defaultThreadFactory(),
+        handler);
 
         while (!serverSocket.isClosed()) {
             try {
-                //单线程,阻塞式监听(bio)
-                //多线程BIO
-                //nio和aio
+                //多线程BIO监听模型
                 Socket socket = serverSocket.accept();
-                //version1:单线程
-                //version2:多线程阻塞式BIO
-                RequestHandler handler = new RequestHandler(socket);
+                //创建一个子线程去处理任务
+                RequestHandler requestHandler = new RequestHandler(socket);
                 //将线程添加到线程池中
-                es.execute(handler);
-                //主线程负责监听,子线程负责处理和响应
+                es.execute(requestHandler);
+                //主线程继续负责监听
             } catch (IOException e) {
+                //避免因为某一个请求异常而导致程序终止
                 e.printStackTrace();
-                continue;
             }
         }
     }
