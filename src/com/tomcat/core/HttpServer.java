@@ -3,7 +3,6 @@ package com.tomcat.core;
 import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
 import com.tomcat.exceptions.RequestMappingException;
-import com.tomcat.thread.TomcatThreadFactory;
 
 import java.io.*;
 import java.net.*;
