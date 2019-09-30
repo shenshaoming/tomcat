@@ -23,11 +23,6 @@ public class RequestHandler implements Runnable {
             Request request = new Request(socket.getInputStream());
             AbstractServlet abstractServlet = HttpServer.map.get(request.getUri());
 
-            //如果请求的是/shutdown 则关闭服务器
-            if (HttpServer.CLOSE_URI.equals(request.getUri())){
-                HttpServer.serverSocket.close();
-                return;
-            }
             //创建用于返回浏览器的对象
             Response response = new Response(socket.getOutputStream());
             response.setRequest(request);

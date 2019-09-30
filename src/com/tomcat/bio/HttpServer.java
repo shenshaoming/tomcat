@@ -1,47 +1,36 @@
-package com.tomcat.core;
+package com.tomcat.bio;
 
 import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
+import com.tomcat.core.RequestHandler;
 import com.tomcat.exceptions.RequestMappingException;
 
-import java.io.*;
-import java.net.*;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
- * NIO版本的tomcat
+ * 多线程BIO实现的tomcat
  * 监听请求,调用request和response对请求作出反应
- * @author 申劭明
- * @date 2019/9/16 17:21
- * @version 4.1
+ * @Author: 申劭明
+ * @Date: 2019/9/16 17:21
+ * @version: 4.1
  */
 public class HttpServer {
-    /**
-     * 线程池中核心线程数的最大值(不是操作系统的最大值)
-     */
-    private int corePoolSize = 10;
-    /**
-     * 最大队列空间
-     */
-    private int maximumPoolSize = 50;
-    /**
-     * 空闲线程的最大存活时间
-     */
-    private long keepAliveTime = 100L;
-    /**
-     * keepAliveTime的时间单位设置
-     */
-    private TimeUnit unit = TimeUnit.SECONDS;
 
     /**
      * 监听端口
      */
-    private static int port = 8080;
+    public static int port = 8080;
+
     /**
      * 关闭服务器的请求URI
      */
@@ -59,32 +48,34 @@ public class HttpServer {
     }
 
     /**
-     * 监听通道
+     * 单例,因为是通过主函数启动,不涉及多进程启动的问题,所以不需要做多线程方面的考虑
      */
-    private ServerSocketChannel serverSocketChannel;
-    /**
-     * NIO负责轮询的Selector
-     */
-    private Selector selector;
+    static ServerSocket serverSocket = null;
 
     /**
-     * @Description : 多线程nio监听数据请求
+     * @Description : 多线程bio监听数据请求
      * @author : 申劭明
      * @date : 2019/9/17 10:29
      */
     public void acceptWait() {
         try {
-            serverSocketChannel= ServerSocketChannel.open();
-            serverSocketChannel.configureBlocking(false);
-            serverSocketChannel.bind(new InetSocketAddress(port));
-            selector = Selector.open();
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            //监听port端口
+            serverSocket = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
         //请求队列,当线程池中的线程数量达到
         BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(50);
-
+        //线程池中核心线程数的最大值(不是操作系统的最大值)
+        int corePoolSize = 10;
+        //最大队列空间
+        int maximumPoolSize = 50;
+        //表示空闲线程的存活时间
+        long keepAliveTime = 100L;
+        //keepAliveTime的单位
+        TimeUnit unit = TimeUnit.SECONDS;
+        //线程池的拒绝策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.DiscardOldestPolicy();
         //创建一个新的线程池
         ThreadPoolExecutor es = new ThreadPoolExecutor(corePoolSize,
         maximumPoolSize,
@@ -92,28 +83,17 @@ public class HttpServer {
         unit,
         workQueue,
         Executors.defaultThreadFactory(),
-        new ThreadPoolExecutor.DiscardOldestPolicy());
+        handler);
 
-        while (true) {
+        while (!serverSocket.isClosed()) {
             try {
-                selector.select(1000);
-
-                Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                Iterator<SelectionKey> iterator = selectionKeys.iterator();
-                while(iterator.hasNext()){
-                    SelectionKey key = iterator.next();
-                    iterator.remove();
-                    if (key.isAcceptable()){
-                        SocketChannel channel = serverSocketChannel.accept();
-                        channel.configureBlocking(false);
-                        channel.register(selector,SelectionKey.OP_READ);
-                    }else if(key.isReadable()){
-                        SocketChannel socketChannel = (SocketChannel) key.channel();
-                        socketChannel.configureBlocking(false);
-                        es.execute(new RequestHandler(socketChannel.socket()));
-                        key.cancel();
-                    }
-                }
+                //多线程BIO监听模型
+                Socket socket = serverSocket.accept();
+                //创建一个子线程去处理任务
+                RequestHandler requestHandler = new RequestHandler(socket);
+                //将线程添加到线程池中
+                es.execute(requestHandler);
+                //主线程继续负责监听
             } catch (IOException e) {
                 //避免因为某一个请求异常而导致程序终止
                 e.printStackTrace();
