@@ -54,7 +54,8 @@ public class Request {
         try {
             //从输入流中读取数据到buffer中,i表示读到了多少字节(多少个byte)
             i = is.read(buffer);
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
             i = -1;
         }
