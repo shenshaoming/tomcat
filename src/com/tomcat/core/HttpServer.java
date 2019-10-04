@@ -111,7 +111,6 @@ public class HttpServer {
                         //拿到新的对象
                         SocketChannel channel = serverSocketChannel.accept();
                         if(channel!=null){
-
                             // 注册连接对象，进行关注，no-Blocking
                             channel.configureBlocking(false);
                             channel.register(selector, SelectionKey.OP_READ);
