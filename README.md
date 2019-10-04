@@ -1,5 +1,6 @@
 # tomcat
-手写tomcat
+手写tomcat<br>
+netty的jar包位于resources下，就引入来说相对麻烦，各位不好意思了。<br>
 version1.0:实现了监听端口,但时不时会服务器就会崩溃.<br>
 version2.0:通过增加访问队列修复了崩溃的bug.<br>
 version3.0:能够通过服务器访问本地(服务器)的文件,默认是D盘下的文件,D盘就相当于WEB_ROOT路径<br>
