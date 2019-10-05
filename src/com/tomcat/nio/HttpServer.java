@@ -1,16 +1,15 @@
-package com.tomcat.core;
+package com.tomcat.nio;
 
 import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
+import com.tomcat.core.RequestHandler;
 import com.tomcat.exceptions.RequestMappingException;
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -19,11 +18,11 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * Netty版本的tomcat
+ * NIO版本的tomcat
  * 监听请求,调用request和response对请求作出反应
  * @author 申劭明
  * @date 2019/9/16 17:21
- * @version 5.3
+ * @version 4.1
  */
 public class HttpServer {
     /**
@@ -78,22 +77,7 @@ public class HttpServer {
      * @date : 2019/9/17 10:29
      */
     public void acceptWait() {
-
-        EventLoopGroup acceptGroup = new NioEventLoopGroup();
-        EventLoopGroup workGroup = new NioEventLoopGroup();
-
-
         try {
-//            ServerBootstrap bootstrap = new ServerBootstrap();
-//            bootstrap.group(acceptGroup,workGroup)
-//                    .channel(NioServerSocketChannel.class)
-//                    .childHandler(new ChannelInitializer<io.netty.channel.socket.SocketChannel>() {
-//                        @Override
-//                        protected void initChannel(io.netty.channel.socket.SocketChannel socketChannel) throws Exception {
-//                            //自定义处理类
-//                            socketChannel.pipeline().addLast(new RequestHandler());
-//                        }
-//                    });
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.bind(new InetSocketAddress(port));
@@ -116,7 +100,6 @@ public class HttpServer {
         workQueue,
         Executors.defaultThreadFactory(),
         new ThreadPoolExecutor.DiscardOldestPolicy());
-
 
         while (true) {
             try {
