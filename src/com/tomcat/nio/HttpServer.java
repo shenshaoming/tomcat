@@ -2,7 +2,6 @@ package com.tomcat.nio;
 
 import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
-import com.tomcat.core.RequestHandler;
 import com.tomcat.exceptions.RequestMappingException;
 
 import java.io.File;
@@ -103,24 +102,26 @@ public class HttpServer {
 
         while (true) {
             try {
-                //如果没有新的连接，就等待
+                //阻塞式监听
                 selector.select(1000);
-                //处理查询结果
+                //获取当前时间点的所有事件
                 Set<SelectionKey> selectionKeys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = selectionKeys.iterator();
+                //遍历所有有事件发生的通道
                 while(iterator.hasNext()){
                     SelectionKey key = iterator.next();
-                    //根据不同类型，进行不同的处理
+                    //判断当前通道是否已经做好socket连接的准备
                     if (key.isAcceptable()){
                         //拿到新的对象
                         SocketChannel channel = serverSocketChannel.accept();
                         if(channel!=null){
                             // 注册连接对象，进行关注，no-Blocking
                             channel.configureBlocking(false);
+                            //注册该通道感兴趣的事件
                             channel.register(selector, SelectionKey.OP_READ);
                         }
+                        //如果当前通道是可读的
                     }else if(key.isReadable()){
-                        //有数据请求的连接
                         SocketChannel socketChannel = (SocketChannel) key.channel();
                         //处理过程中，先取消selector对应连接的注册，避免重复
                         key.cancel();

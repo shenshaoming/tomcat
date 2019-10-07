@@ -1,17 +1,15 @@
-package com.tomcat.core;
+package com.tomcat.nio;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.util.CharsetUtil;
+import java.io.InputStream;
 
 /**
+ * NIO版本的请求处理
  * @Author: 申劭明
  * @Date: 2019/9/16 17:24
  */
 public class Request {
-    /**
-     * 通过Netty读取到的数据
-     */
-    private ByteBuf byteBuf;
+
+    private InputStream is;
     /**
      * 请求路径,如:/test.txt
      */
@@ -29,16 +27,9 @@ public class Request {
 
     }
 
-    @Override
-    public String toString() {
-        return "Request{" +
-                "uri='" + uri + '\'' +
-                ", method='" + method + '\'' +
-                '}';
-    }
-
-    public Request(ByteBuf byteBuf) {
-        this.byteBuf = byteBuf;
+    public Request(InputStream inputStream){
+        this.is = inputStream;
+        //读取报文
         parse();
     }
 
@@ -48,14 +39,36 @@ public class Request {
      * @author : 申劭明
      * @date : 2019/9/17 10:26
     */
-    private void parse() {
+    public void parse() {
+        /**
+         * 一个包没有固定长度，以太网限制在46－1500字节，
+         * 1500就是以太网的MTU，超过这个量，TCP会为IP数据报设置偏移量进行分片传输，
+         * 现在一般可允许应用层设置8k（NTFS系统）的缓冲区，8k的数据由底层分片，
+         * 而应用层看来只是一次发送。
+         */
+        //创建一个容量为2048的StringBuffer对象
+        StringBuffer request = new StringBuffer(2048);
+        //记录字节数量
+        int i ;
+        byte[] buffer = new byte[Response.BUFFER_SIZE];
+        try {
+            //从输入流中读取数据到buffer中,i表示读到了多少字节(多少个byte)
+            i = is.read(buffer);
 
-        String requestStr = byteBuf.toString(CharsetUtil.UTF_8);
-
+        } catch (Exception e) {
+            e.printStackTrace();
+            i = -1;
+        }
+        System.out.println(request);
+        //i表示有读到了多少字节,所以此处要用<而不是<=
+        for (int j = 0; j < i; j++) {
+            request.append((char)buffer[j]);
+        }
+        System.err.println(request.toString());
         //获取请求uri
-        uri = parseUri(requestStr);
+        uri = parseUri(request.toString());
         //获取请求类型
-        method = parseMethod(requestStr);
+        method = parseMethod(request.toString());
     }
 
     /**

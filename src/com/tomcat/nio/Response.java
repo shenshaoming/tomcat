@@ -1,8 +1,4 @@
-package com.tomcat.core;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
+package com.tomcat.nio;
 
 import java.io.*;
 
@@ -35,9 +31,9 @@ public class Response {
     /**
      * 返回页面的数据
      */
-    private ChannelHandlerContext output;
+    private OutputStream output;
 
-    public Response(ChannelHandlerContext outputStream) {
+    public Response(OutputStream outputStream) {
         this.output = outputStream;
     }
 
@@ -52,7 +48,7 @@ public class Response {
      * @date : 2019/9/17 10:27
     */
     public void sendStaticResource() throws IOException {
-        //读取文件时的字节流
+        //返回数据时所用的字节流
         byte[] bytes = new byte[BUFFER_SIZE];
         FileInputStream fis = null;
         if (request == null){
@@ -83,14 +79,12 @@ public class Response {
                         "\r\n" +
                         retMessage;
             }
-            ByteBuf buf = Unpooled.buffer();
             //用输出流返回数据给页面
             if (checkImage(request.getUri())){
-                buf = buf.writeBytes(returnMessage.replaceAll("text/html","image/jpeg;charset=UTF-8").getBytes());
+                output.write(returnMessage.replaceAll("text/html","image/jpeg;charset=UTF-8").getBytes());
             }else{
-                buf = buf.writeBytes(returnMessage.getBytes());
+                output.write(returnMessage.getBytes());
             }
-            output.writeAndFlush(buf);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } finally {
@@ -99,6 +93,7 @@ public class Response {
             }
             if (output != null){
                 //清空缓存区,调用close方法时会有flush操作
+//                output.flush();
                 output.close();
             }
         }
@@ -125,9 +120,11 @@ public class Response {
      * @date : 2019/9/18 10:19
     */
     public void setResponseContent(StringBuilder message){
-        ByteBuf buf = Unpooled.buffer();
-        buf = buf.writeBytes(new StringBuilder(RESPONSE_HEADER).append(message).toString().getBytes());
-        output.writeAndFlush(buf);
+        try {
+            output.write(new StringBuilder(RESPONSE_HEADER).append(message).toString().getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setResponseContent(String message){

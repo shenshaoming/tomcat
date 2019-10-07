@@ -4,17 +4,17 @@ import com.tomcat.annotations.Servlet;
 import com.tomcat.baseservlet.AbstractServlet;
 import com.tomcat.exceptions.RequestMappingException;
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ServerSocketChannel;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.*;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -62,16 +62,6 @@ public class HttpServer {
         //包名,可以通过application.properties设置
         getServlets("com.tomcat.servlet");
     }
-
-    /**
-     * 监听通道
-     */
-    private ServerSocketChannel serverSocketChannel;
-    /**
-     * NIO负责轮询的Selector
-     */
-    private Selector selector;
-
     /**
      * @Description : nio监听数据请求
      * @author : 申劭明
@@ -79,84 +69,32 @@ public class HttpServer {
      */
     public void acceptWait() {
 
-        EventLoopGroup acceptGroup = new NioEventLoopGroup();
-        EventLoopGroup workGroup = new NioEventLoopGroup();
+        //监听请求
+        EventLoopGroup listenGroup = new NioEventLoopGroup();
+        //请求处理
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        ServerBootstrap bootstrap = new ServerBootstrap();
 
-
-        try {
-//            ServerBootstrap bootstrap = new ServerBootstrap();
-//            bootstrap.group(acceptGroup,workGroup)
-//                    .channel(NioServerSocketChannel.class)
-//                    .childHandler(new ChannelInitializer<io.netty.channel.socket.SocketChannel>() {
-//                        @Override
-//                        protected void initChannel(io.netty.channel.socket.SocketChannel socketChannel) throws Exception {
-//                            //自定义处理类
-//                            socketChannel.pipeline().addLast(new RequestHandler());
-//                        }
-//                    });
-            serverSocketChannel = ServerSocketChannel.open();
-            serverSocketChannel.configureBlocking(false);
-            serverSocketChannel.bind(new InetSocketAddress(port));
-            //selector获取不同操作系统下不同的TCP连接动态
-            selector = Selector.open();
-
-            //选择器，根据条件查询符合情况的TCP连接
-            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //请求队列,当线程池中的线程数量达到
-        BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(50);
-
-        //创建一个新的线程池
-        ThreadPoolExecutor es = new ThreadPoolExecutor(corePoolSize,
-        maximumPoolSize,
-        keepAliveTime,
-        unit,
-        workQueue,
-        Executors.defaultThreadFactory(),
-        new ThreadPoolExecutor.DiscardOldestPolicy());
-
-
-        while (true) {
-            try {
-                //如果没有新的连接，就等待
-                selector.select(1000);
-                //处理查询结果
-                Set<SelectionKey> selectionKeys = selector.selectedKeys();
-                Iterator<SelectionKey> iterator = selectionKeys.iterator();
-                while(iterator.hasNext()){
-                    SelectionKey key = iterator.next();
-                    //根据不同类型，进行不同的处理
-                    if (key.isAcceptable()){
-                        //拿到新的对象
-                        SocketChannel channel = serverSocketChannel.accept();
-                        if(channel!=null){
-                            // 注册连接对象，进行关注，no-Blocking
-                            channel.configureBlocking(false);
-                            channel.register(selector, SelectionKey.OP_READ);
-                        }
-                    }else if(key.isReadable()){
-                        //有数据请求的连接
-                        SocketChannel socketChannel = (SocketChannel) key.channel();
-                        //处理过程中，先取消selector对应连接的注册，避免重复
-                        key.cancel();
-
-                        socketChannel.configureBlocking(true);
-                        es.execute(new RequestHandler(socketChannel.socket()));
+        bootstrap.group(listenGroup,workerGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline().addLast(new RequestHandler());
                     }
-                    iterator.remove();
-                }
-                // 检查过程就绪,清除之前的调用效果
-                selector.selectNow();
-            } catch (IOException e) {
-                //避免因为某一个请求异常而导致程序终止
-                e.printStackTrace();
-            }
+                });
+        ChannelFuture future = null;
+        try {
+            future = bootstrap.bind(port).sync();
+            future.channel().closeFuture().sync();
 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            listenGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
         }
     }
-
     /**
      * @param packageName 包名,如com.tomcat.servlet
      * @return : void

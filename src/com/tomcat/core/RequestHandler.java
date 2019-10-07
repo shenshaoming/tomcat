@@ -1,42 +1,42 @@
 package com.tomcat.core;
 
 import com.tomcat.baseservlet.AbstractServlet;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.io.IOException;
 import java.net.Socket;
 
 /**
  * @Author: 申劭明
  * @Date: 2019/9/17 17:45
  */
-public class RequestHandler implements Runnable {
+public class RequestHandler extends SimpleChannelInboundHandler {
 
-    private Socket socket;
-
-    public RequestHandler(Socket socket){
-        this.socket = socket;
+    public RequestHandler(){
     }
-
     @Override
-    public void run() {
-        try {
-            //接收请求参数
-            Request request = new Request(socket.getInputStream());
-            AbstractServlet abstractServlet = HttpServer.map.get(request.getUri());
+    protected void messageReceived(ChannelHandlerContext channelHandlerContext, Object o) {
+        //接收数据
+        Request request = new Request((ByteBuf) o);
+        //写入数据
+        Response response = new Response(channelHandlerContext);
+        //将请求对象放入响应对象中
+        response.setRequest(request);
 
-            //创建用于返回浏览器的对象
-            Response response = new Response(socket.getOutputStream());
-            response.setRequest(request);
-
+        AbstractServlet abstractServlet = HttpServer.map.get(request.getUri());
+        try{
             if (abstractServlet != null){
                 abstractServlet.service(request,response);
             }else{
                 //找不到对应的Servlet则直接访问文件
                 response.sendStaticResource();
             }
-            //如果http短连接则关闭socket
-            //socket.close();
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            channelHandlerContext.close();
         }
     }
 }
