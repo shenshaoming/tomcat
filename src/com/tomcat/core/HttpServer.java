@@ -26,30 +26,9 @@ import java.util.concurrent.*;
  */
 public class HttpServer {
     /**
-     * 线程池中核心线程数的最大值(不是操作系统的最大值)
-     */
-    private int corePoolSize = 10;
-    /**
-     * 最大队列空间
-     */
-    private int maximumPoolSize = 50;
-    /**
-     * 空闲线程的最大存活时间
-     */
-    private long keepAliveTime = 100L;
-    /**
-     * keepAliveTime的时间单位设置
-     */
-    private TimeUnit unit = TimeUnit.SECONDS;
-
-    /**
      * 监听端口
      */
     private static int port = 8080;
-    /**
-     * 关闭服务器的请求URI
-     */
-    static final String CLOSE_URI = "/shutdown";
 
     /**
      * Key值为Servlet的别名(uri),value为该Servlet对象
