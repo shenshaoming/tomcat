@@ -11,4 +11,5 @@ version4.2:当Servlet注解中的value重复时抛出异常<br>
 version5.0:由开启线程改为线程池.<br>
 version5.1:改为由ThreadPoolExecutor创建线程池<br>
 version5.2:从BIO监听模型改为NIO模型<br>
-version5.3:从NIO模型改为基于Netty的NIO模型
+version5.3:从NIO模型改为基于Netty的NIO模型<br>
+version5.4:加入过滤器,收到请求时,要先去访问所有的过滤器

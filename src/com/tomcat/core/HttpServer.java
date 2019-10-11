@@ -86,14 +86,11 @@ public class HttpServer {
         Set<Class<?>> classes = new LinkedHashSet<>();
 
         try {
-            //com.tomcat.servlet,com/tomcat/servelet
             String packageDirName = packageName.replace(".", "/");
             Enumeration<URL> resources = Thread.currentThread().getContextClassLoader().getResources(packageDirName);
 
             while (resources.hasMoreElements()) {
                 URL url = resources.nextElement();
-                System.out.println("****************" + url);
-                System.out.println();
                 String protocol = url.getProtocol();
                 if ("file".equals(protocol)) {
                     String filePath = URLDecoder.decode(url.getFile(), "UTF-8");

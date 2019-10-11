@@ -49,7 +49,6 @@ public class Request {
      * @date : 2019/9/17 10:26
     */
     private void parse() {
-
         String requestStr = byteBuf.toString(CharsetUtil.UTF_8);
 
         //获取请求uri
